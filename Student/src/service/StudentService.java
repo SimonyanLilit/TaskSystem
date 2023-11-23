@@ -92,5 +92,3 @@ public class StudentService {
     }
 
 }
-
-//for classes service classes             super is human

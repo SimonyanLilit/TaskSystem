@@ -121,3 +121,8 @@ public void  task2(Plane p){
         }
     }
 }
+//class cat fields constructor, getters only, 3obj, old youngest heavy lite hom smallest
+//Ստեղծել ինչ-որ կենդանու class մի քանի field-երով։
+//ՈՒնենալ constructor և միայն getter-ներ։
+//Ունենալ 3 օբյեկտ։
+//Գտնել նրանցից ամենամեծին, ամենափոքրին, ամենաթեթևին, ամենածանրին, ամենափոքր ընտանի կենդանուն։

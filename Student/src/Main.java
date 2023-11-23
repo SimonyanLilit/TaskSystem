@@ -10,10 +10,12 @@ public class Main {
 
         }
         System.out.println( "----------------------------");
-        service.oldestStudent(students);
+        //service.oldestStudent(students);
+        //System.out.println( "----------------------------");
+        //service.youngestStudent(students);
         System.out.println( "----------------------------");
-        service.youngestStudent(students);
-        System.out.println( "----------------------------");
-        service.youngestFemaleStudent(students);
+        //service.youngestFemaleStudent(students);
     }
-}
+
+    }
+
