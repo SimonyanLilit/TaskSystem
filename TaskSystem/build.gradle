@@ -1,0 +1,129 @@
+import org.springframework.boot.gradle.tasks.run.BootRun
+
+buildscript {
+    def javaHome = System.properties['java.home']
+    def javaVersion = JavaVersion.current();
+    if (javaVersion < JavaVersion.VERSION_17) {
+        throw new GradleException("This build must be run with Java 17 (Currently: $javaVersion, Current JAVA_HOME: $javaHome).  Please update and try again.")
+    } else {
+        println "Using Java version $javaVersion from JAVA_HOME $javaHome"
+    }
+}
+
+
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version "$springBootVersion"
+    id 'io.spring.dependency-management' version '1.1.0'
+    id 'io.freefair.lombok' version '6.4.3.1'
+    id "org.springdoc.openapi-gradle-plugin" version "1.6.0"
+    id 'org.hidetake.swagger.generator' version '2.19.2'
+    id "com.avast.gradle.docker-compose" version "$avastDockerComposePluginVersion"
+}
+apply plugin: 'java'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'idea'
+apply plugin: 'io.freefair.lombok'
+version '1.0-SNAPSHOT'
+
+Properties props = new Properties()
+props.load(new FileInputStream("$rootProject.projectDir/gradle.properties"))
+props.each { prop ->
+    project.ext.set(prop.key, prop.value)
+}
+def build_tag = "dev"
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+    implementation "org.springframework.boot:spring-boot-starter-web"
+    implementation 'org.springframework.boot:spring-boot-devtools'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation "org.springframework.boot:spring-boot-starter-security"
+    // spring boot starter validation - provides jakarta validation
+    implementation "org.springframework.boot:spring-boot-starter-validation:$springBootVersion"
+    implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
+    implementation group: 'io.jsonwebtoken', name: 'jjwt', version: '0.9.1'
+    runtimeOnly group: 'io.jsonwebtoken', name: 'jjwt-impl', version: '0.10.0'
+
+    implementation "org.postgresql:postgresql:$postgresqlVersion"
+    // flyway
+    implementation "org.flywaydb:flyway-core"
+    // openapi
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:$openapiVersion"
+    swaggerCodegen 'io.swagger.codegen.v3:swagger-codegen-cli:3.0.34'
+}
+
+test {
+    useJUnitPlatform()
+}
+// Avoid producing a 'plain' jar file
+jar {
+    enabled = true
+    exclude ('**/application*.properties')
+    exclude ("AppProperties.class")
+    exclude ("AuthController.class")
+    exclude ("UserController.class")
+    exclude ("RestExceptionHandler.class")
+}
+
+//generateOpenApi task internally uses bootRun.That is why it is needed to set spring profile for bootRun.
+bootRun {
+    args = ["--spring.profiles.active=local"]
+}
+
+compileJava {
+    options.warnings = true
+    options.deprecation = true
+    options.compilerArgs += ["-Xlint:unchecked"]
+}
+
+javadoc.options.addStringOption('Xdoclint:all')
+
+task bootRunMainClassName {}
+
+bootJar {
+    mainClass = 'management.system.AppProperties'
+}
+
+task bootRunPlatformSystem(type: BootRun, dependsOn: 'assemble') {
+    group 'Application'
+    main = 'management.system.AppProperties'
+    doFirst() {
+        classpath = sourceSets.main.runtimeClasspath
+        systemProperty 'spring.profiles.active', 'local'
+    }
+    if (findProperty('debug')) {
+        String port = String.valueOf(findProperty('debugPortPlatformSystem') ?: "5010")
+        String jvmArguments = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=" + port
+        setJvmArgs(List.of(jvmArguments))
+    }
+}
+task buildPostgresDockerImage(type: Exec) {
+    workingDir "${projectDir}/docker/postgres"
+    commandLine "docker", "build", "-t", "platform/postgres:$build_tag", "--pull", "."
+}
+task buildDockerImage(type: Exec) {
+    mustRunAfter assemble
+    workingDir "${projectDir}"
+    commandLine "docker", "build", "--build-arg", "PLATFORM_BUILD_TAG=$build_tag", "-f", "Dockerfile", "-t", "platform/platform-system:$build_tag", "--pull=false", "."
+}
+
+dockerCompose {
+    environment.put 'PLATFORM_BUILD_TAG', "$build_tag"
+    useComposeFiles = ['docker-compose.yml']
+    projectName = 'PS'
+    removeVolumes = false
+    // we use independent tasks for image builds, don't rebuild images again on compose up
+    buildBeforeUp = false
+}
+
+//composeUp.mustRunAfter getTasksByName("build", true)

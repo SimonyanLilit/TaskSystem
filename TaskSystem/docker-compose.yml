@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  db:
+    build:
+      context: docker/postgres
+    image: platform/postgres:${PLATFORM_BUILD_TAG}
+    hostname: db
+    environment:
+      - POSTGRES_PASSWORD=admin_pwd
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT}:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d platform_system" ]
+      start_period: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  platform-system:
+    build:
+      context: /.
+    image: ${PLATFORM_SYSTEM_IMAGE_NAME}:${PLATFORM_BUILD_TAG}
+    hostname: platform-system
+    environment:
+      - spring_profiles_active=local
+      - PLATFORM_SYSTEM_HOSTNAME=${PLATFORM_SYSTEM_HOSTNAME}
+    ports:
+      - "127.0.0.1:9090:9090"
+      - "127.0.0.1:${DEBUG_PLATFORM_SYSTEM_PORT}:5010"
+    healthcheck:
+      start_period: 5s
+      interval: 10s
+      timeout: 5s
+      retries: 20
+volumes:
+  postgresql:
