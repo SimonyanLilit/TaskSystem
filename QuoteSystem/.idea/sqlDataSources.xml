@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="DdlMappings">
+    <mapping uuid="436ee552-ccd8-49b4-8338-11b9b4af504e" name="DDL Mapping" />
+    <mapping uuid="82c82368-308f-4be7-8180-50ced0fa1b55" name="quotedb Mapping">
+      <data-sources db="0330e0bf-1e66-4cf2-9144-bf76ef3f1ef0" ddl="affa9589-8fb4-4ce8-9e4f-64de949e28a9" />
+    </mapping>
+    <mapping uuid="d29da683-9ee2-40f5-a382-3000618ff780" name="quotedb Mapping [2]">
+      <data-sources db="e86f35b5-47a0-4a56-bc3f-534cdbc13ebd" />
+    </mapping>
+  </component>
+</project>
