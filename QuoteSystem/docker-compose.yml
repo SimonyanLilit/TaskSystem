@@ -1,7 +1,0 @@
-version: '3'
-
-services:
-  quotesystem:
-    image: simonyanlilit/quotesystem
-    ports:
-      - "8080:8080"
